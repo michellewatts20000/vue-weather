@@ -2,9 +2,9 @@
   <v-container class="fill-height">
     <v-row justify="center">
       <v-col cols="8" class="my-10">
-        <h1 class="mb-5">About the City Weather Search App</h1>
+        <h1 class="mb-5">About the weather dashboard</h1>
         <p>
-          The "City Weather Search" app is a modern web application that allows
+          The "Weather Dashboard" app is a modern web application that allows
           users to search for cities and retrieve weather information. Built
           using Vue.js and Vuetify, the app provides a user-friendly interface
           for searching cities and displaying relevant weather forecasts.

@@ -27,9 +27,11 @@
         </v-col>
       </v-row>
       <v-row>
-        <h2 class="mx-auto" v-if="weatherData.length">
-          {{ weatherCity.name }}, {{ weatherCity.country }}
-        </h2>
+        <v-col>
+          <h2 class="mt-5" v-if="weatherData.length">
+            Weather for {{ weatherCity.name }}, {{ weatherCity.country }}
+          </h2>
+        </v-col>
       </v-row>
       <v-row class="mt-4">
         <v-col
@@ -41,16 +43,27 @@
         >
           <v-card class="mb-4" dark>
             <v-card-actions>
-              <v-icon color="primary">{{
+              <v-icon large color="primary">{{
                 getWeatherIcon(weather.weather[0].icon)
               }}</v-icon>
             </v-card-actions>
             <v-card-title class="headline">
+              {{ getDayOfWeek(weather.dt_txt) }},
               {{ formatDate(weather.dt_txt) }}
             </v-card-title>
             <v-card-text>
+              <p class="mb-3">
+                UV Index:
+                <v-chip :color="getUvIndexColor(weatherUV)" dark label>
+                  {{ weatherUV }}
+                </v-chip>
+              </p>
               <p>Temperature: {{ weather.main.temp }}°C</p>
               <p>Weather: {{ weather.weather[0].description }}</p>
+              <p>Humidity: {{ weather.main.humidity }}%</p>
+              <p>
+                Wind Speed: {{ (weather.wind.speed * 3.6).toFixed(2) }} km/h
+              </p>
             </v-card-text>
           </v-card>
         </v-col>
@@ -69,6 +82,7 @@ export default {
     const autocompleteOptions = ref([]);
     const weatherData = ref([]);
     const weatherCity = ref([]);
+    const weatherUV = ref([]);
 
     const fetchAutocompleteOptions = async () => {
       try {
@@ -100,10 +114,37 @@ export default {
       axios
         .get(apiUrl)
         .then((response) => {
-          weatherData.value = response.data.list;
+          const filteredData = response.data.list.filter((item) => {
+            const time = new Date(item.dt_txt).getUTCHours();
+            console.log(time);
+            return time === 23;
+          });
+          weatherData.value = filteredData;
           weatherCity.value = response.data.city;
+          getUvIndex(weatherCity.value.coord.lat, weatherCity.value.coord.lon);
         })
         .catch((error) => {
+          console.error(error);
+        });
+    };
+
+    const getUvIndex = function (lat, lon) {
+      var key = process.env.VUE_APP_WEATHER_API_KEY; // Replace with your OpenWeatherMap API key
+      var apiURL =
+        "https://api.openweathermap.org/data/2.5/uvi?appid=" +
+        key +
+        "&lat=" +
+        lat +
+        "&lon=" +
+        lon;
+
+      fetch(apiURL)
+        .then(function (response) {
+          response.json().then(function (data) {
+            weatherUV.value = data.value;
+          });
+        })
+        .catch(function (error) {
           console.error(error);
         });
     };
@@ -113,8 +154,6 @@ export default {
       const options = {
         month: "short",
         day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
       };
       return dateTime.toLocaleDateString("en-US", options);
     };
@@ -136,6 +175,29 @@ export default {
       return iconMap[iconCode] || "mdi-weather";
     };
 
+    const getUvIndexColor = (uvIndex) => {
+      if (uvIndex <= 3) {
+        return "orange";
+      } else {
+        return "red";
+      }
+    };
+
+    const getDayOfWeek = (dateString) => {
+      const daysOfWeek = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+      const date = new Date(dateString);
+      const dayOfWeek = date.getDay();
+      return daysOfWeek[dayOfWeek];
+    };
+
     return {
       inputValue,
       autocompleteOptions,
@@ -144,8 +206,12 @@ export default {
       getWeather,
       weatherData,
       weatherCity,
+      weatherUV,
       formatDate,
       getWeatherIcon,
+      getUvIndex,
+      getUvIndexColor,
+      getDayOfWeek,
     };
   },
 };
