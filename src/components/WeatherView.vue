@@ -73,7 +73,7 @@ export default {
     const fetchAutocompleteOptions = async () => {
       try {
         const response = await axios.get(
-          `http://api.geonames.org/searchJSON?q=${inputValue.value}&maxRows=5&featureCode=PPLA&fclass=P&username=${process.env.VUE_APP_CITY_API_KEY}`
+          `https://api.geonames.org/searchJSON?q=${inputValue.value}&maxRows=5&featureCode=PPLA&fclass=P&username=${process.env.VUE_APP_CITY_API_KEY}`
         );
         autocompleteOptions.value = response.data.geonames;
       } catch (error) {
