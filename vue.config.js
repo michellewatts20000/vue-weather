@@ -9,10 +9,5 @@ module.exports = defineConfig({
     },
     sourceMap: true,
   },
-  vue: {
-    compilerOptions: {
-      isCustomElement: (tag) => tag.startsWith("v-"),
-    },
-  },
   transpileDependencies: true,
 });
