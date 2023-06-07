@@ -43,6 +43,13 @@
           <h2 class="mt-5" v-if="weatherData.length">
             Weather for {{ weatherCity.name }}, {{ weatherCity.country }}
           </h2>
+          <v-alert
+            type="error"
+            v-if="isError"
+            closable
+            @click:close="handleAlertClose"
+            :text="errorMessage"
+          ></v-alert>
         </v-col>
       </v-row>
       <v-row class="mt-4">
@@ -121,6 +128,8 @@ export default {
     const weatherCity = ref([]);
     const weatherUV = ref([]);
     const isFetching = ref(false); // Add a loading state
+    const isError = ref(false);
+    const errorMessage = ref("");
 
     const fetchAutocompleteOptions = async () => {
       try {
@@ -140,6 +149,7 @@ export default {
 
     const getWeather = () => {
       isFetching.value = true;
+      autocompleteOptions.value = [];
       const city = inputValue.value;
       const key = process.env.VUE_APP_WEATHER_API_KEY; // Replace with your OpenWeatherMap API key
       const apiUrl =
@@ -165,6 +175,8 @@ export default {
         .catch((error) => {
           console.error(error);
           isFetching.value = false;
+          isError.value = true;
+          errorMessage.value = `${error.response.data.cod}: ${error.response.data.message}`;
         });
     };
 
@@ -244,6 +256,11 @@ export default {
       weatherUV.value = null; // Clear the weatherUV value
     };
 
+    const handleAlertClose = () => {
+      isError.value = false;
+      inputValue.value = "";
+    };
+
     return {
       inputValue,
       autocompleteOptions,
@@ -260,6 +277,9 @@ export default {
       getDayOfWeek,
       clearWeatherResults,
       isFetching,
+      isError,
+      errorMessage,
+      handleAlertClose,
     };
   },
 };
