@@ -10,6 +10,8 @@
             :items="autocompleteOptions"
             item-text="name"
             @input="fetchAutocompleteOptions"
+            @click:clear="clearWeatherResults"
+            @keydown.enter="getWeather"
             clearable
           ></v-text-field>
           <v-list v-if="autocompleteOptions.length" class="mb-5">
@@ -21,8 +23,18 @@
               <v-list-item-title>{{ option.name }}</v-list-item-title>
             </v-list-item>
           </v-list>
-          <v-btn large class="mt-3" color="primary" @click="getWeather"
-            >Get Weather</v-btn
+          <v-btn
+            large
+            rounded="0"
+            elevation="0"
+            class="mt-3"
+            color="primary"
+            @click="getWeather"
+            :disabled="isFetching"
+          >
+            <span v-if="isFetching">Loading...</span>
+            <!-- Show loading spinner -->
+            <span v-else>Get Weather</span></v-btn
           >
         </v-col>
       </v-row>
@@ -41,30 +53,54 @@
           md="4"
           sm="12"
         >
-          <v-card class="mb-4" dark>
-            <v-card-actions>
-              <v-icon large color="primary">{{
-                getWeatherIcon(weather.weather[0].icon)
-              }}</v-icon>
-            </v-card-actions>
-            <v-card-title class="headline">
-              {{ getDayOfWeek(weather.dt_txt) }},
-              {{ formatDate(weather.dt_txt) }}
-            </v-card-title>
-            <v-card-text>
-              <p class="mb-3">
+          <v-card class="mb-4">
+            <v-card-item
+              :title="`${getDayOfWeek(weather.dt_txt)}, ${formatDate(
+                weather.dt_txt
+              )}`"
+            >
+              <template v-slot:subtitle>
                 UV Index:
                 <v-chip :color="getUvIndexColor(weatherUV)" dark label>
                   {{ weatherUV }}
                 </v-chip>
-              </p>
-              <p>Temperature: {{ weather.main.temp }}°C</p>
-              <p>Weather: {{ weather.weather[0].description }}</p>
-              <p>Humidity: {{ weather.main.humidity }}%</p>
-              <p>
-                Wind Speed: {{ (weather.wind.speed * 3.6).toFixed(2) }} km/h
-              </p>
+              </template>
+            </v-card-item>
+            <v-card-text class="py-0">
+              <v-row no-gutters>
+                <v-col class="text-h2 mt-2" cols="8">
+                  {{ weather.main.temp.toFixed(0) }}&deg;C
+                </v-col>
+
+                <v-col cols="4" class="text-right">
+                  <v-icon
+                    color="secondary"
+                    :icon="getWeatherIcon(weather.weather[0].icon)"
+                    size="88"
+                  ></v-icon>
+                </v-col>
+              </v-row>
             </v-card-text>
+
+            <div class="d-flex py-3 justify-space-between">
+              <v-list-item density="compact" prepend-icon="mdi-weather-windy">
+                <v-list-item-subtitle
+                  >{{
+                    (weather.wind.speed * 3.6).toFixed(2)
+                  }}
+                  km/h</v-list-item-subtitle
+                >
+              </v-list-item>
+
+              <v-list-item
+                density="compact"
+                :prepend-icon="getWeatherIcon(weather.weather[0].icon)"
+              >
+                <v-list-item-subtitle
+                  >{{ weather.main.humidity }}%</v-list-item-subtitle
+                >
+              </v-list-item>
+            </div>
           </v-card>
         </v-col>
       </v-row>
@@ -73,8 +109,9 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import axios from "axios";
+import Chart from "chart.js/auto";
 
 export default {
   setup() {
@@ -83,6 +120,7 @@ export default {
     const weatherData = ref([]);
     const weatherCity = ref([]);
     const weatherUV = ref([]);
+    const isFetching = ref(false); // Add a loading state
 
     const fetchAutocompleteOptions = async () => {
       try {
@@ -101,6 +139,7 @@ export default {
     };
 
     const getWeather = () => {
+      isFetching.value = true;
       const city = inputValue.value;
       const key = process.env.VUE_APP_WEATHER_API_KEY; // Replace with your OpenWeatherMap API key
       const apiUrl =
@@ -116,15 +155,16 @@ export default {
         .then((response) => {
           const filteredData = response.data.list.filter((item) => {
             const time = new Date(item.dt_txt).getUTCHours();
-            console.log(time);
             return time === 23;
           });
           weatherData.value = filteredData;
           weatherCity.value = response.data.city;
           getUvIndex(weatherCity.value.coord.lat, weatherCity.value.coord.lon);
+          isFetching.value = false;
         })
         .catch((error) => {
           console.error(error);
+          isFetching.value = false;
         });
     };
 
@@ -198,6 +238,12 @@ export default {
       return daysOfWeek[dayOfWeek];
     };
 
+    const clearWeatherResults = () => {
+      weatherData.value = []; // Clear the weatherData array
+      weatherCity.value = null; // Clear the weatherCity object
+      weatherUV.value = null; // Clear the weatherUV value
+    };
+
     return {
       inputValue,
       autocompleteOptions,
@@ -212,6 +258,8 @@ export default {
       getUvIndex,
       getUvIndexColor,
       getDayOfWeek,
+      clearWeatherResults,
+      isFetching,
     };
   },
 };

@@ -1,8 +1,8 @@
 <template>
   <v-container class="fill-height">
     <v-row justify="center">
-      <v-col cols="8" class="my-10">
-        <h1 class="mb-5">About the weather dashboard</h1>
+      <v-col cols="10" class="my-10">
+        <h1 class="mb-5">Let's talk about the weather ..</h1>
         <p>
           The "Weather Dashboard" app is a modern web application that allows
           users to search for cities and retrieve weather information. Built
@@ -10,7 +10,7 @@
           for searching cities and displaying relevant weather forecasts.
         </p>
 
-        <h2 class="mt-4 mb-2">Key Features:</h2>
+        <h3 class="mt-4 mb-2">Key Features:</h3>
 
         <ul>
           <li>
